@@ -9,5 +9,4 @@
         public string Lon { get; set; }
         public string IP { get; set; }
     }
-
 }

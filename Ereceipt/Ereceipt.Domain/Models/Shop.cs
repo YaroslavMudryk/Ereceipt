@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
 namespace Ereceipt.Domain.Models
 {
     public class Shop : BaseModel<int>

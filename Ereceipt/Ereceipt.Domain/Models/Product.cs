@@ -6,5 +6,6 @@ namespace Ereceipt.Domain.Models
         [Required, StringLength(150, MinimumLength = 2)]
         public string Name { get; set; }
         public string Image { get; set; }
+        public string[] Barcodes { get; set; } // json object
     }
 }

@@ -6,5 +6,6 @@ namespace Ereceipt.Web.Controllers
     [ApiController]
     public class ApiBaseController : ControllerBase
     {
+
     }
 }

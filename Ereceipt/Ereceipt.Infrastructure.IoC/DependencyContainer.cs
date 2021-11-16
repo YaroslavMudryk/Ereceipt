@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Ereceipt.Application.Services.Implementations;
+using Ereceipt.Application.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ereceipt.Infrastructure.IoC
 {
@@ -6,7 +8,7 @@ namespace Ereceipt.Infrastructure.IoC
     {
         public static IServiceCollection AddUSNServices(this IServiceCollection services)
         {
-
+            services.AddSingleton<ITokenManager, InMemoryTokenManager>();
 
             return services;
         }

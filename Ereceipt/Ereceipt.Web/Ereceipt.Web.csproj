@@ -14,4 +14,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Ereceipt.Application\Ereceipt.Application.csproj" />
+    <ProjectReference Include="..\Ereceipt.Infrastructure.IoC\Ereceipt.Infrastructure.IoC.csproj" />
+  </ItemGroup>
+
 </Project>

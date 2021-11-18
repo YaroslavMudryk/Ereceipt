@@ -6,7 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="ViewModels\" />
+    <PackageReference Include="AutoMapper" Version="10.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ereceipt.Infrastructure.Data\Ereceipt.Infrastructure.Data.csproj" />
   </ItemGroup>
 
 </Project>

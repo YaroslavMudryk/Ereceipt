@@ -1,5 +1,8 @@
-﻿using Ereceipt.Application.Services.Implementations;
+﻿using AutoMapper;
+using Ereceipt.Application.Profiles;
+using Ereceipt.Application.Services.Implementations;
 using Ereceipt.Application.Services.Interfaces;
+using Ereceipt.Infrastructure.Data.EntityFramework.Context;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ereceipt.Infrastructure.IoC
@@ -8,7 +11,24 @@ namespace Ereceipt.Infrastructure.IoC
     {
         public static IServiceCollection AddUSNServices(this IServiceCollection services)
         {
+            services.AddMapperProfiles();
+
+            services.AddSqlServer<EreceiptContext>("Server=(localdb)\\MSSQLLocalDB;Database=EreceiptTestDb;Trusted_Connection=True;");
+
             services.AddSingleton<ITokenManager, InMemoryTokenManager>();
+            services.AddScoped<IUserService, UserService>();
+
+            return services;
+        }
+
+        private static IServiceCollection AddMapperProfiles(this IServiceCollection services)
+        {
+            var mappingConfig = new MapperConfiguration(mc =>
+            {
+                mc.AddProfile(new UsersProfile());
+            });
+            IMapper mapper = mappingConfig.CreateMapper();
+            services.AddSingleton(mapper);
 
             return services;
         }

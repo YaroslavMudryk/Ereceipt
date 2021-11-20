@@ -3,11 +3,6 @@ using Ereceipt.Application.Services.Interfaces;
 using Ereceipt.Application.ViewModels.Users;
 using Ereceipt.Infrastructure.Data.EntityFramework.Context;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Ereceipt.Application.Services.Implementations
 {
@@ -19,6 +14,11 @@ namespace Ereceipt.Application.Services.Implementations
         {
             _db = db;
             _mapper = mapper;
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            return _db.DisposeAsync();
         }
 
         public async Task<Result<UsersSearch>> GetAllUsersAsync(int page)

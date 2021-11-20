@@ -2,7 +2,7 @@
 
 namespace Ereceipt.Application.Services.Interfaces
 {
-    public interface IUserService
+    public interface IUserService : IAsyncDisposable
     {
         Task<Result<UserViewModel>> GetUserByIdAsync(int id);
         Task<Result<List<UserShortViewModel>>> SearchUsersAsync(string query, int page);

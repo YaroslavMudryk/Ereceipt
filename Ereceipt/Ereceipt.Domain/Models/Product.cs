@@ -10,5 +10,6 @@ namespace Ereceipt.Domain.Models
         public string Producer { get; set; }
         public string Image { get; set; }
         public string[] Barcodes { get; set; } // json object
+        public List<ProductReceipt> ProductReceipts { get; set; }
     }
 }

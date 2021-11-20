@@ -11,6 +11,10 @@
         NewReceipt,
         RemoveReceipt,
         NewReceiptInGroup,
-        RemoveReceiptFromGroup
+        RemoveReceiptFromGroup,
+        NewMember,
+        RemoveMember,
+        JoinCurrentUserToGroup,
+        KickCurrentUserFromGroup
     }
 }

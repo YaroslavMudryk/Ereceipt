@@ -5,13 +5,13 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ereceipt.Domain", "Ereceipt.Domain\Ereceipt.Domain.csproj", "{8BF9E9B9-3716-4FF7-8F95-A926B68A9226}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ereceipt.Infrastructure.Data", "Ereceipt.Infrastructure.Data\Ereceipt.Infrastructure.Data.csproj", "{5659210A-ED89-4575-96B3-997825D54220}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ereceipt.Infrastructure.Data", "Ereceipt.Infrastructure.Data\Ereceipt.Infrastructure.Data.csproj", "{5659210A-ED89-4575-96B3-997825D54220}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ereceipt.Application", "Ereceipt.Application\Ereceipt.Application.csproj", "{4F1FAA86-FC6F-4F84-994F-41ECA8F06EBE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ereceipt.Application", "Ereceipt.Application\Ereceipt.Application.csproj", "{4F1FAA86-FC6F-4F84-994F-41ECA8F06EBE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ereceipt.Web", "Ereceipt.Web\Ereceipt.Web.csproj", "{6B24F473-F66C-400A-97C6-FC0EFE746F9F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ereceipt.Web", "Ereceipt.Web\Ereceipt.Web.csproj", "{6B24F473-F66C-400A-97C6-FC0EFE746F9F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ereceipt.Infrastructure.IoC", "Ereceipt.Infrastructure.IoC\Ereceipt.Infrastructure.IoC.csproj", "{27EBE9BC-CF1D-405C-B82F-4E3C3746DC81}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ereceipt.Infrastructure.IoC", "Ereceipt.Infrastructure.IoC\Ereceipt.Infrastructure.IoC.csproj", "{27EBE9BC-CF1D-405C-B82F-4E3C3746DC81}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -7,9 +7,12 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="10.1.1" />
+    <PackageReference Include="Extensions.Generator" Version="1.0.0" />
+    <PackageReference Include="Extensions.Password" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ereceipt.Constants\Ereceipt.Constants.csproj" />
     <ProjectReference Include="..\Ereceipt.Infrastructure.Data\Ereceipt.Infrastructure.Data.csproj" />
   </ItemGroup>
 

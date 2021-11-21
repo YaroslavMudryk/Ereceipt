@@ -1,6 +1,8 @@
-﻿namespace Ereceipt.Application.ViewModels.Authentication
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Ereceipt.Application.ViewModels.Authentication
 {
-    public class RegisterEmailCreateModel
+    public class RegisterEmailCreateModel : RequestModel
     {
         [Required, MinLength(3), MaxLength(100)]
         public string Login { get; set; }

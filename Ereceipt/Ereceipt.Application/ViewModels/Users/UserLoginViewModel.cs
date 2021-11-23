@@ -1,6 +1,7 @@
-﻿using Ereceipt.Domain.Models;
+﻿using Ereceipt.Application.ViewModels.Authentication;
+using Ereceipt.Domain.Models;
 
-namespace Ereceipt.Application.ViewModels.Authentication
+namespace Ereceipt.Application.ViewModels.Users
 {
     public class UserLoginViewModel
     {

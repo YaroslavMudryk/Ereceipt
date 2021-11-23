@@ -18,6 +18,7 @@ namespace Ereceipt.Domain.Models
         public bool IsActiveByDate => ActiveFrom < DateTime.Now && ActiveTill > DateTime.Now;
         [Required]
         public bool InDevelopment { get; set; }
+        public int[] CanUseWhileDevelopment { get; set; }
         [Required]
         public string AppId { get; set; }
         [Required]

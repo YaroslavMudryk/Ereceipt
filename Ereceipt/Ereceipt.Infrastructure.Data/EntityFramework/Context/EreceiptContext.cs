@@ -30,6 +30,23 @@ namespace Ereceipt.Infrastructure.Data.EntityFramework.Context
         {
             modelBuilder.ApplyConfiguration(new SessionConfiguration());
             modelBuilder.ApplyConfiguration(new ProductConfiguration());
+            modelBuilder.ApplyConfiguration(new UserLoginConfiguration());
+            modelBuilder.ApplyConfiguration(new AppConfiguration());
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            var newEntities = this.ChangeTracker.Entries().Where(x => x.Entity is BaseModel && x.State == EntityState.Added).Select(x => x.Entity as BaseModel);
+            foreach (var entity in newEntities)
+            {
+                entity.CreatedAt = DateTime.Now;
+            }
+            var updateEntities = this.ChangeTracker.Entries().Where(x => x.Entity is BaseModel && x.State == EntityState.Modified).Select(x => x.Entity as BaseModel);
+            foreach (var entity in updateEntities)
+            {
+                entity.LastUpdatedAt = DateTime.Now;
+            }
+            return base.SaveChangesAsync(cancellationToken);
         }
     }
 }

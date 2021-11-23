@@ -1,244 +1,146 @@
 ﻿using AutoMapper;
 using Ereceipt.Application.Services.Interfaces;
 using Ereceipt.Application.ViewModels.Authentication;
+using Ereceipt.Application.ViewModels.Users;
 using Ereceipt.Constants;
 using Ereceipt.Domain.Models;
 using Ereceipt.Infrastructure.Data.EntityFramework.Context;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Extensions.Password;
 using Extensions.Generator;
-using System.Threading.Tasks;
+using Extensions.Password;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace Ereceipt.Application.Services.Implementations
 {
     public class AuthenticationService : IAuthenticationService
     {
         private readonly IMapper _mapper;
+        private readonly IDetectClient _detectClient;
         private readonly EreceiptContext _db;
-        public AuthenticationService(IMapper mapper, EreceiptContext context)
+        public AuthenticationService(IMapper mapper, EreceiptContext context, IDetectClient detectClient)
         {
             _mapper = mapper;
             _db = context;
+            _detectClient = detectClient;
         }
 
-        public async Task<Result<ConfirmEmailViewModel>> ConfirmUserAsync(ConfirmEmailCreateModel model)
+        public async Task<Result<ConfirmEmailCreateModel>> ConfirmUserAsync(ConfirmEmailCreateModel model)
         {
-            var userLoginForConfirm = await _db.UserLogins.FirstOrDefaultAsync(x => x.Login == model.Login && x.Type == "email");
-            if (userLoginForConfirm is null)
-                return new Result<ConfirmEmailViewModel>(Errors.Users.UserNotExist);
-            if (userLoginForConfirm.IsConfirm)
-                return new Result<ConfirmEmailViewModel>(Errors.Users.UserAlreadyConfirmed);
-            var diffTime = DateTime.Now - userLoginForConfirm.CreatedAt;
-            if (diffTime.Days > 1)
-                return new Result<ConfirmEmailViewModel>(Errors.Users.TokenExpired);
-            if (userLoginForConfirm.TokenConfirm != model.Token)
-                return new Result<ConfirmEmailViewModel>(Errors.Users.IncorrectToken);
-            userLoginForConfirm.IsConfirm = true;
-            userLoginForConfirm.ConfirmAt = DateTime.Now;
-            var confirmResult = await UpdateUserLoginAsync(userLoginForConfirm);
-            if (!confirmResult.IsConfirm)
-                return new Result<ConfirmEmailViewModel>(Errors.Users.SomethingWrong);
+            var userForConfirm = await _db.UserLogins
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Login == model.EmailAddress && x.Type == UserLoginType.Email);
+            if (userForConfirm == null)
+                return new Result<ConfirmEmailCreateModel>("User not exist");
+            if (userForConfirm.IsConfirm)
+                return new Result<ConfirmEmailCreateModel>("User is already confirmed");
+            if (userForConfirm.TokenConfirm != model.Token)
+                return new Result<ConfirmEmailCreateModel>("Token not confirmed");
 
-            //todo send notification
+            userForConfirm.IsConfirm = true;
+            userForConfirm.ConfirmAt = DateTime.Now;
+            userForConfirm.ConfirmFromDevice = _detectClient.GetClientInfo(model);
 
-            return new Result<ConfirmEmailViewModel>(result: null);
-        }
-
-        private async Task<UserLogin> UpdateUserLoginAsync(UserLogin userLogin)
-        {
-            _db.UserLogins.Update(userLogin);
+            _db.UserLogins.Update(userForConfirm);
             await _db.SaveChangesAsync();
-            return userLogin;
+
+            return new Result<ConfirmEmailCreateModel>();
         }
 
         public async Task<Result<UserLoginViewModel>> LoginByEmailAsync(LoginEmailCreateModel model)
         {
-            var app = await _db.Apps.FirstOrDefaultAsync(x => x.AppId == model.AppId);
-            if (app is null)
-            {
+            var userLogin = await _db.UserLogins.AsNoTracking().FirstOrDefaultAsync(x => x.Login == model.Login && x.Type == UserLoginType.Email);
+            if (userLogin == null)
+                return new Result<UserLoginViewModel>("User with this login not exist");
+
+            var app = await _db.Apps.AsNoTracking().FirstOrDefaultAsync(x => x.AppId == model.App.AppId);
+            if (app == null)
                 return new Result<UserLoginViewModel>("App not found");
-            }
-            if (app.AppSecret != model.AppSecret)
-            {
-                return new Result<UserLoginViewModel>("App not found");
-            }
-            if (app.InDevelopment)
-            {
-                return new Result<UserLoginViewModel>("App not available");
-            }
+            if (app.AppSecret != model.App.AppSecret)
+                return new Result<UserLoginViewModel>("App creds not real");
             if (!app.IsActiveByDate)
-            {
-                return new Result<UserLoginViewModel>("App is expired");
-            }
+                return new Result<UserLoginViewModel>("App is expiration by date");
+            if (app.InDevelopment)
+                if (!app.CanUseWhileDevelopment.Contains(userLogin.UserId))
+                    return new Result<UserLoginViewModel>("App in development");
 
-
-
-
-            var userLogin = await _db.UserLogins.FirstOrDefaultAsync(x => x.Login == model.Login && x.Type == "email");
-            if (userLogin is null)
-            {
-                return new Result<UserLoginViewModel>("User not found");
-            }
-            if (!PasswordManager.VerifyPasswordHash(model.Password, userLogin.Password))
-            {
-                return new Result<UserLoginViewModel>("Password is incorrect");
-            }
             if (!userLogin.IsConfirm)
-            {
                 return new Result<UserLoginViewModel>("User not confirm");
-            }
 
+            if (!model.Password.VerifyPasswordHash(userLogin.PasswordHash))
+                return new Result<UserLoginViewModel>("Login or password is incorrect");
 
+            var clientInfo = _detectClient.GetClientInfo(model);
 
+            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userLogin.UserId);
 
-            var currentUser = await _db.Users.FirstOrDefaultAsync(x => x.Id == userLogin.UserId);
+            var userRoles = await _db.UserRoles.Include(x => x.Role).Where(x => x.UserId == userLogin.UserId).Select(x => x.Role).ToListAsync();
 
-            var roles = await _db.UserRoles
-                .AsNoTracking()
-                .Include(x=>x.Role)
-                .Where(x=>x.UserId== userLogin.UserId)
-                .Select(x=>x.Role)
-                .ToListAsync();
-
-            var newSession = GetSession(app, model, currentUser.Id);
+            //todo rewrite current logic
+            //todo rewrite current logic
+            //todo rewrite current logic
 
             var dataForLogin = new UserLoginViewModel
             {
                 LoginData = userLogin,
-                Session = _mapper.Map<SessionViewModel>(newSession),
+                //Session = _mapper.Map<SessionViewModel>(newSession),
                 User = currentUser,
-                Role = roles.OrderByDescending(x => x.AccessLevel).ToArray()[0]
-            };
-            dataForLogin.Token = _claimsProvider.GenerateAccessToken(_claimsProvider.GetClaimsIdentity(dataForLogin));
-
-            dataForLogin.Token.User = new UserAuthViewModel
-            {
-                AppName = app.Name,
-                Id = currentUser.Id,
-                AuthMethod = userLogin.Type,
-                Avatar = currentUser.Avatar,
-                Device = newSession.Device,
-                Firstname = currentUser.Name.Split(' ')[0],
-                Lastname = currentUser.Name.Split(' ')[1],
-                Fullname = currentUser.Name,
-                Platform = newSession.Platform,
-                Role = dataForLogin.Role.Name,
-                Username = currentUser.Username
+                Role = userRoles.OrderByDescending(x => x.Lvl).ToArray()[0]
             };
 
-            newSession.Claims = CustomMapper.ConvertClaimsToJson(dataForLogin.Token.Token.Claims);
-            newSession.Token = dataForLogin.Token.Token.Token;
-            var sessionToView = await _sessionRepository.CreateAsync(newSession);
-            if (sessionToView == null || !sessionToView.IsActive)
-            {
-                await _loginAttemptRepository.CreateAsync(GetLoginAttempt(CauseStatus.FailedSessionActivate, LoginStatus.Failed, model));
-                return new Result<UserLoginViewModel>("Session activate attempt failed");
-            }
-
-            await _sessionsManager.AddNewSessionAsync(newSession.Token);
+            //todo rewrite current logic
+            //todo rewrite current logic
+            //todo rewrite current logic
 
 
-
-            await _notificationService.CreateNotificationAsync(_notificationHelper.GetLoginNotification(currentUser.Id, newSession, model, app));
-
-
-
-            await _loginAttemptRepository.CreateAsync(GetLoginAttempt(null, LoginStatus.Success, model));
             return new Result<UserLoginViewModel>(dataForLogin);
         }
 
-        public async Task<Result<UserRegisterViewModel>> RegisterByEmailAsync(RegisterEmailCreateModel model)
+        public async Task<Result<RegisterEmailCreateModel>> RegisterByEmailAsync(RegisterEmailCreateModel model)
         {
-            var checkUser = await _db.UserLogins.FirstOrDefaultAsync(x => x.Login == model.Login && x.Type == "email");
-            if (checkUser != null)
-                return new Result<UserRegisterViewModel>(Errors.Users.UserAlreadyExist);
-            var checkApp = await _db.Apps.FirstOrDefaultAsync(x => x.AppId == model.AdditionalInfo.AppId);
-            if (checkApp is null)
-                return new Result<UserRegisterViewModel>("App not found");
-            if (checkApp.AppSecret != model.AdditionalInfo.AppSecret)
-                return new Result<UserRegisterViewModel>("AppSecret is incorrect");
+            if (await IsExistUserAsync(model.Login))
+                return new Result<RegisterEmailCreateModel>("User is already exist");
 
+            if (await IsUsernameBusyAsync(model.Username))
+                return new Result<RegisterEmailCreateModel>("Username is busy");
+
+            var newUser = new User
+            {
+                CreatedAt = DateTime.Now,
+                Name = model.Name,
+                Username = model.Username,
+                About = model.About
+            };
             var newUserLogin = new UserLogin
             {
-                Login = model.Login,
-                Password = model.Password.GeneratePasswordHash(),
                 CreatedAt = DateTime.Now,
-                CreatedBy = "0",
-                CreatedFromIP = model.IP,
-                ConfirmAt = null,
+                CreatedBy = "s",
                 IsConfirm = false,
-                TokenConfirm = RandomGenerator.GetString(50),
-                Type = "email",
+                Type = UserLoginType.Email,
+                TokenConfirm = RandomGenerator.GetString(50, IsLowwer: true),
                 Version = 0,
-                User = new User
-                {
-                    Name = $"{model.FirstName} {model.LastName}",
-                    CreatedAt = DateTime.Now,
-                    Version = 0,
-                    CreatedBy = "0",
-                    Username = $"{Guid.NewGuid().ToString("N").Substring(0, 10)}"
-                }
+                Login = model.Login,
+                PasswordHash = model.Password.GeneratePasswordHash(),
+                User = newUser,
+                RegisterFromDevice = _detectClient.GetClientInfo(model)
             };
 
-            var createdUserLogin = await CreateUserLoginAsync(newUserLogin);
-            if (createdUserLogin == null)
-                return new Result<UserRegisterViewModel>("Something went wrong");
+            //todo create notification
 
-            await CreateUserRoleAsync(new UserRole
-            {
-                UserId = createdUserLogin.UserId,
-                RoleId = 1
-            });
+            //todo send confirmation account to email
 
-            //todo notification
-
-            return new Result<UserRegisterViewModel>(result: null);
-        }
-
-
-        private async Task<UserLogin> CreateUserLoginAsync(UserLogin userLogin)
-        {
-            await _db.UserLogins.AddAsync(userLogin);
+            await _db.UserLogins.AddAsync(newUserLogin);
             await _db.SaveChangesAsync();
-            return userLogin;
+            return new Result<RegisterEmailCreateModel>();
         }
 
-        private async Task<UserRole> CreateUserRoleAsync(UserRole userRole)
+        private async Task<bool> IsExistUserAsync(string email)
         {
-            await _db.UserRoles.AddAsync(userRole);
-            await _db.SaveChangesAsync();
-            return userRole;
+            return await _db.UserLogins.AsNoTracking().AnyAsync(x => x.Login == email && x.Type == "email");
         }
 
-        private Session GetSession(App app, LoginEmailCreateModel loginEmailCreateModel, int userId)
+        private async Task<bool> IsUsernameBusyAsync(string username)
         {
-            return new Session
-            {
-                AppId = app.AppId,
-                AppName = app.Name,
-                AppVersion = loginEmailCreateModel.AppVersion,
-                Country = loginEmailCreateModel.UserInfo.Location.Country,
-                City = loginEmailCreateModel.UserInfo.Location.City,
-                CreatedAt = DateTime.Now,
-                CreatedBy = "0",
-                CreatedFromIP = loginEmailCreateModel.IP,
-                DateUnActive = null,
-                DeviceType = loginEmailCreateModel.DeviceType,
-                Device = loginEmailCreateModel.Device,
-                IsActive = true,
-                IsOfficialApp = app.IsOfficial,
-                Lat = loginEmailCreateModel.UserInfo.Location.Lat,
-                Lon = loginEmailCreateModel.UserInfo.Location.Lon,
-                IP = loginEmailCreateModel.UserInfo.Location.IP,
-                Platform = loginEmailCreateModel.Platform,
-                Region = loginEmailCreateModel.UserInfo.Location.Region,
-                UserId = userId,
-                Version = 0
-            };
+            return await _db.Users.AsNoTracking().AnyAsync(x => x.Username == username);
         }
     }
 }

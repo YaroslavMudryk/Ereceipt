@@ -1,4 +1,4 @@
-﻿namespace Ereceipt.Application.ViewModels.Authentication
+﻿namespace Ereceipt.Application.ViewModels.Users
 {
     public class TokenViewModel
     {

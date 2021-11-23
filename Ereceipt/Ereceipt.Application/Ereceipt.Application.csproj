@@ -9,6 +9,9 @@
     <PackageReference Include="AutoMapper" Version="10.1.1" />
     <PackageReference Include="Extensions.Generator" Version="1.0.0" />
     <PackageReference Include="Extensions.Password" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.14.1" />
   </ItemGroup>
 
   <ItemGroup>

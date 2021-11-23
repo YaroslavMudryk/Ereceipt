@@ -3,6 +3,7 @@ using Ereceipt.Application.Profiles;
 using Ereceipt.Application.Services.Implementations;
 using Ereceipt.Application.Services.Interfaces;
 using Ereceipt.Infrastructure.Data.EntityFramework.Context;
+using Extensions.DeviceDetector;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ereceipt.Infrastructure.IoC
@@ -11,12 +12,17 @@ namespace Ereceipt.Infrastructure.IoC
     {
         public static IServiceCollection AddUSNServices(this IServiceCollection services)
         {
+            services.AddDeviceDetector();
+
+            services.AddHttpContextAccessor();
+
             services.AddMapperProfiles();
 
             services.AddSqlServer<EreceiptContext>("Server=(localdb)\\MSSQLLocalDB;Database=EreceiptTestDb;Trusted_Connection=True;");
 
             services.AddSingleton<ITokenManager, InMemoryTokenManager>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IDetectClient, DetectClient>();
 
             return services;
         }

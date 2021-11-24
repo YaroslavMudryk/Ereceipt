@@ -1,4 +1,5 @@
 ﻿using Ereceipt.Application.Services.Interfaces;
+using Ereceipt.Application.ViewModels.Users;
 using Ereceipt.Web.AppSettings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,37 +13,45 @@ namespace Ereceipt.Web.Controllers.V1
     public class IdentityController : ApiBaseController
     {
         private readonly ITokenManager _tokenManager;
-        public IdentityController(ITokenManager tokenManager)
+        private readonly IAuthenticationService _authenticationService;
+        public IdentityController(ITokenManager tokenManager, IAuthenticationService authenticationService)
         {
             _tokenManager = tokenManager;
+            _authenticationService = authenticationService;
         }
 
-        [HttpGet("token")]
-        public IActionResult GetToken()
+        [HttpPost("register")]
+        public async Task<IActionResult> RegisterAsync([FromBody] RegisterEmailCreateModel model)
         {
-            var claims = new List<Claim>
-                {
-                    new Claim(ClaimsIdentity.DefaultNameClaimType, "admin@admin"),
-                    new Claim(ClaimsIdentity.DefaultRoleClaimType, "Admin")
-                };
-            ClaimsIdentity claimsIdentity =
-            new ClaimsIdentity(claims, "Token", ClaimsIdentity.DefaultNameClaimType,
-                ClaimsIdentity.DefaultRoleClaimType);
-            var now = DateTime.UtcNow;
-            var jwt = new JwtSecurityToken(
-                    issuer: AuthenticationOption.ISSUER,
-                    audience: AuthenticationOption.AUDIENCE,
-                    notBefore: now,
-                    claims: claims,
-                    expires: now.Add(TimeSpan.FromMinutes(AuthenticationOption.LIFETIME)),
-                    signingCredentials: new SigningCredentials(AuthenticationOption.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
-            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
-            _tokenManager.AddNewToken(encodedJwt);
-            return Ok(new
-            {
-                token = encodedJwt,
-                validTo = jwt.ValidTo
-            });
+            var res = await _authenticationService.RegisterByEmailAsync(model);
+            if (res.IsSuccessed)
+                return Ok();
+            return BadRequest(res.Error);
+        }
+
+        [HttpPost("confirm")]
+        public async Task<IActionResult> ConfirmAsync([FromBody] ConfirmEmailCreateModel model)
+        {
+            var res = await _authenticationService.ConfirmUserAsync(model);
+            if (res.IsSuccessed)
+                return Ok();
+            return BadRequest(res.Error);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginAsync([FromBody] LoginEmailCreateModel model)
+        {
+            var res = await _authenticationService.LoginByEmailAsync(model);
+            if (res.IsSuccessed)
+                return Ok(res.Data);
+            return BadRequest(res.Error);
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> LogoutAsync()
+        {
+            var res = await _authenticationService.LogoutByTokenAsync(GetRequestData());
+            return Ok();
         }
     }
 }

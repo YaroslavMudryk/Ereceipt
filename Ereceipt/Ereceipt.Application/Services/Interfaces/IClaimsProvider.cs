@@ -5,10 +5,9 @@ namespace Ereceipt.Application.Services.Interfaces
 {
     public interface IClaimsProvider
     {
-        AuthenticationViewModel GetClaimsIdentity(UserLoginViewModel loginModel);
-        AuthViewModel GenerateAccessToken(AuthenticationViewModel authentication);
+        AuthViewModel GenerateAccessToken(TokenDataViewModel tokenData);
         Task<string> GetAccessTokenAsync();
-        string GetValueByType(string type);
+        T GetValueByType<T>(string type);
         HttpContext HttpContext { get; }
     }
 }

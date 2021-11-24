@@ -1,5 +1,5 @@
 ﻿using Ereceipt.Application.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
+using Extensions.Generator;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ereceipt.Web.Controllers.V1
@@ -11,6 +11,16 @@ namespace Ereceipt.Web.Controllers.V1
         public UsersController(IUserService userService)
         {
             _userService = userService;
+        }
+
+        [HttpGet("creds")]
+        public IActionResult GetAppId()
+        {
+            return Ok(new
+            {
+                AppId = RandomGenerator.GetUniqCode(5).ToUpper(),
+                AppSecret = RandomGenerator.GetString(50).ToLower()
+            });
         }
 
         [HttpGet]

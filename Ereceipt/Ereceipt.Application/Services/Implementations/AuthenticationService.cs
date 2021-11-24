@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Ereceipt.Application.Services.Interfaces;
+using Ereceipt.Application.ViewModels;
 using Ereceipt.Application.ViewModels.Authentication;
 using Ereceipt.Application.ViewModels.Users;
 using Ereceipt.Constants;
@@ -9,6 +10,7 @@ using Extensions.Generator;
 using Extensions.Password;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Ereceipt.Application.Services.Implementations
 {
@@ -16,12 +18,16 @@ namespace Ereceipt.Application.Services.Implementations
     {
         private readonly IMapper _mapper;
         private readonly IDetectClient _detectClient;
+        private readonly ITokenManager _tokenManager;
+        private readonly IClaimsProvider _claimsProvider;
         private readonly EreceiptContext _db;
-        public AuthenticationService(IMapper mapper, EreceiptContext context, IDetectClient detectClient)
+        public AuthenticationService(IMapper mapper, EreceiptContext context, IDetectClient detectClient, IClaimsProvider claimsProvider, ITokenManager tokenManager)
         {
             _mapper = mapper;
             _db = context;
             _detectClient = detectClient;
+            _claimsProvider = claimsProvider;
+            _tokenManager = tokenManager;
         }
 
         public async Task<Result<ConfirmEmailCreateModel>> ConfirmUserAsync(ConfirmEmailCreateModel model)
@@ -73,26 +79,68 @@ namespace Ereceipt.Application.Services.Implementations
 
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userLogin.UserId);
 
+            if (currentUser == null)
+                return new Result<UserLoginViewModel>("User not found");
+
             var userRoles = await _db.UserRoles.Include(x => x.Role).Where(x => x.UserId == userLogin.UserId).Select(x => x.Role).ToListAsync();
 
-            //todo rewrite current logic
-            //todo rewrite current logic
-            //todo rewrite current logic
-
-            var dataForLogin = new UserLoginViewModel
+            var newSession = new Session
             {
-                LoginData = userLogin,
-                //Session = _mapper.Map<SessionViewModel>(newSession),
+                CreatedAt = DateTime.Now,
+                CreatedBy = userLogin.Login,
+                CreatedFromIP = model.IP,
+                App = app,
+                Device = clientInfo,
+                IsActive = true,
+                UserId = currentUser.Id,
+                DateUnActive = null,
+                LastUpdatedAt = null,
+                LastUpdatedBy = null,
+                LastUpdatedFromIP = null,
+                Version = 0,
+
+            };
+            var dataForToken = new TokenDataViewModel
+            {
                 User = currentUser,
-                Role = userRoles.OrderByDescending(x => x.Lvl).ToArray()[0]
+                UserLogin = userLogin,
+                Roles = userRoles,
+                App = app,
+                Session = newSession
             };
 
-            //todo rewrite current logic
-            //todo rewrite current logic
-            //todo rewrite current logic
+            var res = _claimsProvider.GenerateAccessToken(dataForToken);
 
+            newSession.Token = res.Token.Token;
+            await _db.Sessions.AddAsync(newSession);
+            await _db.SaveChangesAsync();
 
-            return new Result<UserLoginViewModel>(dataForLogin);
+            _tokenManager.AddNewToken(newSession.Token);
+
+            return new Result<UserLoginViewModel>(new UserLoginViewModel(res));
+        }
+
+        public async Task<Result<bool>> LogoutByTokenAsync(RequestModel request)
+        {
+            var accessToken = await _claimsProvider.GetAccessTokenAsync();
+
+            var sessionByToken = await _db.Sessions.AsNoTracking().FirstOrDefaultAsync(x => x.Token == accessToken);
+
+            if (sessionByToken == null)
+                return new Result<bool>("Session not found");
+            if (request.UserId != _claimsProvider.GetValueByType<int>(ClaimTypes.NameIdentifier))
+                return new Result<bool>("Access denited");
+            if (!sessionByToken.IsActive)
+                return new Result<bool>("Session is already unactive");
+
+            sessionByToken.IsActive = false;
+            sessionByToken.DateUnActive = DateTime.Now;
+            sessionByToken.UnActiveFromDevice = sessionByToken.Device;
+
+            _db.Sessions.Update(sessionByToken);
+            await _db.SaveChangesAsync();
+            _tokenManager.RemoveToken(accessToken);
+            return new Result<bool>(true);
         }
 
         public async Task<Result<RegisterEmailCreateModel>> RegisterByEmailAsync(RegisterEmailCreateModel model)

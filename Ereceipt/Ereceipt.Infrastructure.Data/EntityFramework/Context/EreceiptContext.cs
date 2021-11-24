@@ -1,6 +1,8 @@
-﻿using Ereceipt.Domain.Models;
+﻿using Ereceipt.Constants;
+using Ereceipt.Domain.Models;
 using Ereceipt.Infrastructure.Data.EntityFramework.Configurations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Ereceipt.Infrastructure.Data.EntityFramework.Context
 {
@@ -25,8 +27,21 @@ namespace Ereceipt.Infrastructure.Data.EntityFramework.Context
         {
             Database.EnsureCreated();
             SaveChangesResult = new SaveChangesResult();
+            InitBaseDataIfDatabaseEmpty();
         }
 
+        private void InitBaseDataIfDatabaseEmpty()
+        {
+            if (!Roles.Any())
+            {
+                Roles.AddRange(RolesFactory.GetAllRoles());
+            }
+
+            if (!Apps.Any())
+            {
+                Apps.AddRange(AppsFactory.GetApps());
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,16 +55,6 @@ namespace Ereceipt.Infrastructure.Data.EntityFramework.Context
         {
             try
             {
-                var newEntities = this.ChangeTracker.Entries().Where(x => x.Entity is BaseModel && x.State == EntityState.Added).Select(x => x.Entity as BaseModel);
-                foreach (var entity in newEntities)
-                {
-                    entity.CreatedAt = DateTime.Now;
-                }
-                var updateEntities = this.ChangeTracker.Entries().Where(x => x.Entity is BaseModel && x.State == EntityState.Modified).Select(x => x.Entity as BaseModel);
-                foreach (var entity in updateEntities)
-                {
-                    entity.LastUpdatedAt = DateTime.Now;
-                }
                 var res = base.SaveChangesAsync(cancellationToken);
                 SaveChangesResult = new SaveChangesResult
                 {

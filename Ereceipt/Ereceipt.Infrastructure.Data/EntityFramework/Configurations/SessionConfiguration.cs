@@ -18,6 +18,10 @@ namespace Ereceipt.Infrastructure.Data.EntityFramework.Configurations
                 v => v.ToJson(),
                 v => v.FromJson<ClientInfo>());
 
+            builder.Property(x => x.UnActiveFromDevice).HasConversion(
+                v => v.ToJson(),
+                v => v.FromJson<ClientInfo>());
+
             builder.Property(x => x.App).HasConversion(
                 v => v.ToJson(),
                 v => v.FromJson<App>());

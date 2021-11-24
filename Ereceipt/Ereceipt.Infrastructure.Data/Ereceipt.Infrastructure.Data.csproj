@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ereceipt.Constants\Ereceipt.Constants.csproj" />
     <ProjectReference Include="..\Ereceipt.Domain\Ereceipt.Domain.csproj" />
   </ItemGroup>
 

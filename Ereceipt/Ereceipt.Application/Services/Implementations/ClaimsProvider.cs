@@ -1,6 +1,7 @@
 ﻿using Ereceipt.Application.Services.Interfaces;
 using Ereceipt.Application.ViewModels.Users;
 using Ereceipt.Constants;
+using Ereceipt.Domain.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -22,15 +23,16 @@ namespace Ereceipt.Application.Services.Implementations
 
         public HttpContext HttpContext => _httpContextAccessor.HttpContext;
 
-        public AuthViewModel GenerateAccessToken(AuthenticationViewModel authentication)
+        public AuthViewModel GenerateAccessToken(TokenDataViewModel tokenData)
         {
+            var claims = GetUserClaims(tokenData);
             var now = DateTime.UtcNow;
             var expires = now.Add(TimeSpan.FromDays(TokenOptions.LIFETIME));
             var jwt = new JwtSecurityToken(
                     issuer: TokenOptions.ISSUER,
                     audience: TokenOptions.AUDIENCE,
                     notBefore: now,
-                    claims: authentication.Claims,
+                    claims: claims,
                     expires: expires,
                     signingCredentials: new SigningCredentials(TokenOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
             var token = new JwtSecurityTokenHandler().WriteToken(jwt);
@@ -41,7 +43,7 @@ namespace Ereceipt.Application.Services.Implementations
                     Token = token,
                     Type = "bearer",
                     ExpiredAt = expires,
-                    Claims = authentication.Claims.Select(x => new ClaimViewModel
+                    Claims = claims.Select(x => new ClaimViewModel
                     {
                         Type = x.Type,
                         Value = x.Value
@@ -50,37 +52,80 @@ namespace Ereceipt.Application.Services.Implementations
             };
         }
 
+        private List<Claim> GetUserClaims(TokenDataViewModel tokenData)
+        {
+            var claims = new List<Claim>(9);
+            claims.Add(new Claim(ClaimTypes.NameIdentifier, tokenData.User.Id.ToString()));
+            claims.Add(new Claim(ClaimTypes.Name, tokenData.User.Username));
+            claims.Add(new Claim(ClaimTypes.Email, tokenData.UserLogin.Login));
+            claims.Add(new Claim(ClaimTypes.AuthenticationMethod, "pwd"));
+            claims.Add(GetRoleClaim(tokenData));
+            claims.Add(new Claim("AppName", tokenData.App.Name));
+            claims.Add(new Claim("Device", GetDeviceNameClaim(tokenData.Session)));
+            claims.Add(new Claim("DeviceType", GetDeviceTypeClaim(tokenData.Session)));
+            claims.Add(new Claim("Platform", GetOsClaim(tokenData.Session)));
+            return claims;
+        }
+
+        private string GetDeviceNameClaim(Session session)
+        {
+            string device = null;
+            var brand = session.Device.Device.Brand;
+            var model = session.Device.Device.Model;
+            if (brand == null || model == null)
+            {
+                if(brand == null)
+                {
+                    device = model;
+                }
+                else
+                {
+                    device = brand;
+                }
+            }
+            else
+            {
+                device = $"{brand} {model}";
+            }
+            return device;
+        }
+        private string GetDeviceTypeClaim(Session session)
+        {
+            var type = session.Device.Device.Type;
+            if (string.IsNullOrEmpty(type))
+                return "Unknown";
+            return type;
+        }
+        private string GetOsClaim(Session session)
+        {
+            string os = null;
+            var osName = session.Device.OS.Name;
+            var osVersion = session.Device.OS.Version;
+
+
+            return os;
+        }
+        private Claim GetRoleClaim(TokenDataViewModel tokenData)
+        {
+            Claim claim = null;
+            if (tokenData.Roles != null && tokenData.Roles.Count > 1)
+                claim = new Claim(ClaimTypes.Role, tokenData.Roles.OrderByDescending(x => x.Lvl).FirstOrDefault().Name);
+            else
+                claim = new Claim(ClaimTypes.Role, tokenData.Roles[0].Name);
+            return claim;
+        }
+
         public async Task<string> GetAccessTokenAsync()
         {
             return await _httpContextAccessor.HttpContext.GetTokenAsync("access_token");
         }
 
-        public AuthenticationViewModel GetClaimsIdentity(UserLoginViewModel loginModel)
+        public T GetValueByType<T>(string type)
         {
-            if (loginModel is null)
-                return new AuthenticationViewModel
-                {
-                    Claims = null,
-                    Error = "Some error"
-                };
-            var claims = new List<Claim>(5);
-            claims.Add(new Claim("Id", loginModel.User.Id.ToString()));
-            claims.Add(new Claim(ClaimTypes.Name, loginModel.User.Username));
-            claims.Add(new Claim(ClaimTypes.Role, loginModel.Role.Name));
-            claims.Add(new Claim(ClaimTypes.AuthenticationMethod, loginModel.LoginData.Type));
-            claims.Add(new Claim("Device", loginModel.Session.Device.Device));
-            claims.Add(new Claim("Platform", loginModel.Session.Device.Platform));
-            claims.Add(new Claim("AppName", loginModel.Session.Application.AppName));
-            return new AuthenticationViewModel
-            {
-                Error = null,
-                Claims = claims
-            };
-        }
-
-        public string GetValueByType(string type)
-        {
-            throw new NotImplementedException();
+            var claim = HttpContext.User.Claims.FirstOrDefault(x => x.Type == type);
+            if (claim == null)
+                return default(T);
+            return (T)Convert.ChangeType(claim.Value, typeof(T));
         }
     }
 }

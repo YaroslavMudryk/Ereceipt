@@ -7,6 +7,7 @@ namespace Ereceipt.Domain.Models
         [Required]
         public bool IsActive { get; set; }
         public DateTime? DateUnActive { get; set; }
+        public ClientInfo UnActiveFromDevice { get; set; }
         public App App { get; set; } // json object
         public ClientInfo Device { get; set; } // json object
         public Location Location { get; set; } //json object

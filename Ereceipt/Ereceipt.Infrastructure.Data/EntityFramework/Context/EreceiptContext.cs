@@ -7,7 +7,7 @@ namespace Ereceipt.Infrastructure.Data.EntityFramework.Context
     public class EreceiptContext : DbContext
     {
         public DbSet<App> Apps { get; set; }
-        public DbSet<LoyaltyCard> LoyaltyCards { get; set;}
+        public DbSet<LoyaltyCard> LoyaltyCards { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Role> Roles { get; set; }
@@ -19,10 +19,12 @@ namespace Ereceipt.Infrastructure.Data.EntityFramework.Context
 
 
 
+        public SaveChangesResult SaveChangesResult { get; private set; }
 
-        public EreceiptContext(DbContextOptions<EreceiptContext> options): base(options)
+        public EreceiptContext(DbContextOptions<EreceiptContext> options) : base(options)
         {
             Database.EnsureCreated();
+            SaveChangesResult = new SaveChangesResult();
         }
 
 
@@ -36,17 +38,33 @@ namespace Ereceipt.Infrastructure.Data.EntityFramework.Context
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            var newEntities = this.ChangeTracker.Entries().Where(x => x.Entity is BaseModel && x.State == EntityState.Added).Select(x => x.Entity as BaseModel);
-            foreach (var entity in newEntities)
+            try
             {
-                entity.CreatedAt = DateTime.Now;
+                var newEntities = this.ChangeTracker.Entries().Where(x => x.Entity is BaseModel && x.State == EntityState.Added).Select(x => x.Entity as BaseModel);
+                foreach (var entity in newEntities)
+                {
+                    entity.CreatedAt = DateTime.Now;
+                }
+                var updateEntities = this.ChangeTracker.Entries().Where(x => x.Entity is BaseModel && x.State == EntityState.Modified).Select(x => x.Entity as BaseModel);
+                foreach (var entity in updateEntities)
+                {
+                    entity.LastUpdatedAt = DateTime.Now;
+                }
+                var res = base.SaveChangesAsync(cancellationToken);
+                SaveChangesResult = new SaveChangesResult
+                {
+                    Exception = null
+                };
+                return res;
             }
-            var updateEntities = this.ChangeTracker.Entries().Where(x => x.Entity is BaseModel && x.State == EntityState.Modified).Select(x => x.Entity as BaseModel);
-            foreach (var entity in updateEntities)
+            catch (Exception ex)
             {
-                entity.LastUpdatedAt = DateTime.Now;
+                SaveChangesResult = new SaveChangesResult
+                {
+                    Exception = ex
+                };
+                return Task.FromResult(-1);
             }
-            return base.SaveChangesAsync(cancellationToken);
         }
     }
 }

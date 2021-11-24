@@ -10,6 +10,7 @@ using Ereceipt.Web.Filters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Ereceipt.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,11 +23,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = AuthenticationOption.ISSUER,
+            ValidIssuer = TokenOptions.ISSUER,
             ValidateAudience = true,
-            ValidAudience = AuthenticationOption.AUDIENCE,
+            ValidAudience = TokenOptions.AUDIENCE,
             ValidateLifetime = true,
-            IssuerSigningKey = AuthenticationOption.GetSymmetricSecurityKey(),
+            IssuerSigningKey = TokenOptions.GetSymmetricSecurityKey(),
             ValidateIssuerSigningKey = true,
         };
     });

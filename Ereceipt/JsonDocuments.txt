@@ -1,0 +1,12 @@
+{
+  "device": null,
+  "login": "yaroslav.mudryk@gmail.com",
+  "password": "Yarik266210!",
+  "app": {
+    "appId": "XFPY-HQJH-BWED-97SI-ISCW",
+    "appSecret": "b0iggum7okttfqsjuobexvqvnxk5x355gzleitkxgbruvj5wib"
+  },
+  "name": "Yaroslav Mudryk",
+  "username": "Yarik08",
+  "confirmPassword": "Yarik266210!"
+}

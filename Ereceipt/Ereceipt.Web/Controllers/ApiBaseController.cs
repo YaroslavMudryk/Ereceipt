@@ -12,7 +12,7 @@ namespace Ereceipt.Web.Controllers
         {
             if (User.Identity.IsAuthenticated)
             {
-                var userId = HttpContext.User.Claims.FirstOrDefault(x => x.Value == ClaimTypes.NameIdentifier).Value;
+                var userId = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier).Value;
                 var ip = HttpContext.Connection.RemoteIpAddress.ToString();
                 return new RequestModel
                 {

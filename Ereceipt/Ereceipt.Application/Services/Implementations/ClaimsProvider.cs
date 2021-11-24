@@ -61,7 +61,7 @@ namespace Ereceipt.Application.Services.Implementations
             claims.Add(new Claim(ClaimTypes.AuthenticationMethod, "pwd"));
             claims.Add(GetRoleClaim(tokenData));
             claims.Add(new Claim("AppName", tokenData.App.Name));
-            claims.Add(new Claim("Device", GetDeviceNameClaim(tokenData.Session)));
+            //claims.Add(new Claim("Device", GetDeviceNameClaim(tokenData.Session)));
             claims.Add(new Claim("DeviceType", GetDeviceTypeClaim(tokenData.Session)));
             claims.Add(new Claim("Platform", GetOsClaim(tokenData.Session)));
             return claims;
@@ -102,6 +102,10 @@ namespace Ereceipt.Application.Services.Implementations
             var osName = session.Device.OS.Name;
             var osVersion = session.Device.OS.Version;
 
+            if (osName == null || osVersion == null)
+                os = "Unknown";
+            else
+                os = $"{osName} {osVersion}";
 
             return os;
         }

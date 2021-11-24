@@ -18,11 +18,14 @@ namespace Ereceipt.Infrastructure.IoC
 
             services.AddMapperProfiles();
 
-            services.AddSqlServer<EreceiptContext>("Server=(localdb)\\MSSQLLocalDB;Database=EreceiptTestDb;Trusted_Connection=True;");
+            services.AddSqlServer<EreceiptContext>("Server=(localdb)\\MSSQLLocalDB;Database=EreceiptDb;Trusted_Connection=True;");
 
             services.AddSingleton<ITokenManager, InMemoryTokenManager>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IDetectClient, DetectClient>();
+            services.AddScoped<IClaimsProvider, ClaimsProvider>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<ISessionService, SessionService>();
 
             return services;
         }

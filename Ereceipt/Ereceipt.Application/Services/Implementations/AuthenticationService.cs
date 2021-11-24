@@ -98,7 +98,6 @@ namespace Ereceipt.Application.Services.Implementations
                 LastUpdatedBy = null,
                 LastUpdatedFromIP = null,
                 Version = 0,
-
             };
             var dataForToken = new TokenDataViewModel
             {
@@ -178,6 +177,26 @@ namespace Ereceipt.Application.Services.Implementations
 
             await _db.UserLogins.AddAsync(newUserLogin);
             await _db.SaveChangesAsync();
+
+            if (newUserLogin.Id == 1)
+            {
+                await _db.UserRoles.AddAsync(new UserRole
+                {
+                    UserId = newUserLogin.UserId,
+                    RoleId = 1
+                });
+                await _db.SaveChangesAsync();
+            }
+            else
+            {
+                await _db.UserRoles.AddAsync(new UserRole
+                {
+                    UserId = newUserLogin.UserId,
+                    RoleId = 3
+                });
+                await _db.SaveChangesAsync();
+            }
+
             return new Result<RegisterEmailCreateModel>();
         }
 

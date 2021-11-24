@@ -9,9 +9,15 @@ namespace Ereceipt.Infrastructure.Data.EntityFramework.Context
     public class EreceiptContext : DbContext
     {
         public DbSet<App> Apps { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+        public DbSet<Currency> Currencies { get; set; }
+        public DbSet<Group> Groups { get; set; }
+        public DbSet<GroupUser> GroupUsers { get; set; }
         public DbSet<LoyaltyCard> LoyaltyCards { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductReceipt> ProductReceipts { get; set; }
+        public DbSet<Receipt> Receipts { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Session> Sessions { get; set; }
         public DbSet<Shop> Shops { get; set; }
@@ -27,7 +33,7 @@ namespace Ereceipt.Infrastructure.Data.EntityFramework.Context
         {
             Database.EnsureCreated();
             SaveChangesResult = new SaveChangesResult();
-            InitBaseDataIfDatabaseEmpty();
+            //InitBaseDataIfDatabaseEmpty();
         }
 
         private void InitBaseDataIfDatabaseEmpty()
@@ -49,6 +55,7 @@ namespace Ereceipt.Infrastructure.Data.EntityFramework.Context
             modelBuilder.ApplyConfiguration(new ProductConfiguration());
             modelBuilder.ApplyConfiguration(new UserLoginConfiguration());
             modelBuilder.ApplyConfiguration(new AppConfiguration());
+
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

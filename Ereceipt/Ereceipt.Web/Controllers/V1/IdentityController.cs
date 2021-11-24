@@ -14,10 +14,12 @@ namespace Ereceipt.Web.Controllers.V1
     {
         private readonly ITokenManager _tokenManager;
         private readonly IAuthenticationService _authenticationService;
-        public IdentityController(ITokenManager tokenManager, IAuthenticationService authenticationService)
+        private readonly ISessionService _sessionService;
+        public IdentityController(ITokenManager tokenManager, IAuthenticationService authenticationService, ISessionService sessionService)
         {
             _tokenManager = tokenManager;
             _authenticationService = authenticationService;
+            _sessionService = sessionService;
         }
 
         [HttpPost("register")]
@@ -52,6 +54,16 @@ namespace Ereceipt.Web.Controllers.V1
         {
             var res = await _authenticationService.LogoutByTokenAsync(GetRequestData());
             return Ok();
+        }
+
+        [HttpGet("sessions")]
+        [Authorize]
+        public async Task<IActionResult> GetMySessionsAsync()
+        {
+            var sessions = await _sessionService.GetUserSessionsAsync(GetRequestData().UserId);
+            if (sessions.IsSuccessed)
+                return Ok(sessions.Data);
+            return BadRequest(sessions.Error);
         }
     }
 }

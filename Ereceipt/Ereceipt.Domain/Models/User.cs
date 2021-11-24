@@ -15,7 +15,7 @@ namespace Ereceipt.Domain.Models
         public List<Session> Sessions { get; set; }
         public List<UserLogin> UserLogins { get; set; }
         public List<Receipt> Receipts { get; set; }
-        public List<Comment> Comments { get; set; }
+        //public List<Comment> Comments { get; set; }
         public List<GroupUser> GroupUsers { get; set; }
     }
 }

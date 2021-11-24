@@ -20,14 +20,16 @@ namespace Ereceipt.Application.Services.Implementations
         private readonly IDetectClient _detectClient;
         private readonly ITokenManager _tokenManager;
         private readonly IClaimsProvider _claimsProvider;
+        private readonly ILocationService _locationService;
         private readonly EreceiptContext _db;
-        public AuthenticationService(IMapper mapper, EreceiptContext context, IDetectClient detectClient, IClaimsProvider claimsProvider, ITokenManager tokenManager)
+        public AuthenticationService(IMapper mapper, EreceiptContext context, IDetectClient detectClient, IClaimsProvider claimsProvider, ITokenManager tokenManager, ILocationService locationService)
         {
             _mapper = mapper;
             _db = context;
             _detectClient = detectClient;
             _claimsProvider = claimsProvider;
             _tokenManager = tokenManager;
+            _locationService = locationService;
         }
 
         public async Task<Result<ConfirmEmailCreateModel>> ConfirmUserAsync(ConfirmEmailCreateModel model)
@@ -84,6 +86,21 @@ namespace Ereceipt.Application.Services.Implementations
 
             var userRoles = await _db.UserRoles.Include(x => x.Role).Where(x => x.UserId == userLogin.UserId).Select(x => x.Role).ToListAsync();
 
+            Location location;
+            var reqLocation = await _locationService.GetIpInfoAsync(model.IP);
+            if (reqLocation == null)
+                location = null;
+            else
+                location = new Location
+                {
+                    City = reqLocation.City,
+                    Country = reqLocation.Country,
+                    IP = reqLocation.Query,
+                    Lat = reqLocation.Latitude,
+                    Lon = reqLocation.Longitude,
+                    Region = reqLocation.Region
+                };
+
             var newSession = new Session
             {
                 CreatedAt = DateTime.Now,
@@ -91,6 +108,7 @@ namespace Ereceipt.Application.Services.Implementations
                 CreatedFromIP = model.IP,
                 App = app,
                 Device = clientInfo,
+                Location = location,
                 IsActive = true,
                 UserId = currentUser.Id,
                 DateUnActive = null,
@@ -138,7 +156,9 @@ namespace Ereceipt.Application.Services.Implementations
 
             _db.Sessions.Update(sessionByToken);
             await _db.SaveChangesAsync();
+
             _tokenManager.RemoveToken(accessToken);
+
             return new Result<bool>(true);
         }
 
@@ -178,11 +198,11 @@ namespace Ereceipt.Application.Services.Implementations
             await _db.UserLogins.AddAsync(newUserLogin);
             await _db.SaveChangesAsync();
 
-            if (newUserLogin.Id == 1)
+            if (newUserLogin.User.Id == 1)
             {
                 await _db.UserRoles.AddAsync(new UserRole
                 {
-                    UserId = newUserLogin.UserId,
+                    UserId = newUserLogin.User.Id,
                     RoleId = 1
                 });
                 await _db.SaveChangesAsync();
@@ -191,7 +211,7 @@ namespace Ereceipt.Application.Services.Implementations
             {
                 await _db.UserRoles.AddAsync(new UserRole
                 {
-                    UserId = newUserLogin.UserId,
+                    UserId = newUserLogin.User.Id,
                     RoleId = 3
                 });
                 await _db.SaveChangesAsync();

@@ -26,6 +26,7 @@ namespace Ereceipt.Infrastructure.IoC
             services.AddScoped<IClaimsProvider, ClaimsProvider>();
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<ISessionService, SessionService>();
+            services.AddScoped<ILocationService, LocationService>();
 
             return services;
         }

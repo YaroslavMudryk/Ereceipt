@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Ereceipt.Web.AppSettings;
+using System.Net;
 namespace Ereceipt.Web.Middlewares
 {
     public class GlobalErrorHandlerMiddleware
@@ -27,7 +28,12 @@ namespace Ereceipt.Web.Middlewares
             var requestId = httpContext.TraceIdentifier;
             httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            return httpContext.Response.WriteAsync(requestId);
+            return httpContext.Response.WriteAsJsonAsync(new ApiResponse
+            {
+                Ok = false,
+                Error = "Internal server error",
+                Data = requestId
+            });
         }
     }
 

@@ -90,7 +90,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseGlobalErrorHandler();
 app.UseAccessToken();
-//app.UseTokenManager();
+app.UseTokenManager();
 
 app.UseApiVersioning();
 app.UseHttpsRedirection();

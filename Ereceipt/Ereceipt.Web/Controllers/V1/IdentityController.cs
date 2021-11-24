@@ -27,8 +27,8 @@ namespace Ereceipt.Web.Controllers.V1
         {
             var res = await _authenticationService.RegisterByEmailAsync(model);
             if (res.IsSuccessed)
-                return Ok();
-            return BadRequest(res.Error);
+                return ReturnOk(null);
+            return ReturnBadRequest(res.Error);
         }
 
         [HttpPost("confirm")]
@@ -36,8 +36,8 @@ namespace Ereceipt.Web.Controllers.V1
         {
             var res = await _authenticationService.ConfirmUserAsync(model);
             if (res.IsSuccessed)
-                return Ok();
-            return BadRequest(res.Error);
+                return ReturnOk(null);
+            return ReturnBadRequest(res.Error);
         }
 
         [HttpPost("login")]
@@ -45,25 +45,26 @@ namespace Ereceipt.Web.Controllers.V1
         {
             var res = await _authenticationService.LoginByEmailAsync(model);
             if (res.IsSuccessed)
-                return Ok(res.Data);
-            return BadRequest(res.Error);
+                return ReturnOk(res.Data);
+            return ReturnBadRequest(res.Error);
         }
 
         [HttpPost("logout")]
+        [Authorize]
         public async Task<IActionResult> LogoutAsync()
         {
             var res = await _authenticationService.LogoutByTokenAsync(GetRequestData());
-            return Ok();
+            return ReturnOk(null);
         }
 
         [HttpGet("sessions")]
         [Authorize]
         public async Task<IActionResult> GetMySessionsAsync()
         {
-            var sessions = await _sessionService.GetUserSessionsAsync(GetRequestData().UserId);
-            if (sessions.IsSuccessed)
-                return Ok(sessions.Data);
-            return BadRequest(sessions.Error);
+            var res = await _sessionService.GetUserSessionsAsync(GetRequestData().UserId);
+            if (res.IsSuccessed)
+                return ReturnOk(res.Data);
+            return ReturnBadRequest(res.Error);
         }
     }
 }
